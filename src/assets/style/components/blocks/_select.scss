@@ -1,0 +1,84 @@
+.selectBlock {
+    // margin-bottom: 30px;
+    // font-family: $helvetica-neue-font;
+}
+.mainSelect .select__indicator .css-tj5bde-Svg {
+    fill: silver !important;
+    width: 25px;
+    height: 25px;
+}
+.homeSelect .select__indicator .css-tj5bde-Svg {
+    fill: silver !important;
+}
+.homeSelect .select__placeholder,
+.homeSelect .select__value-container--has-value .select__single-value {
+    color: silver !important;
+    font-weight: 100 !important;
+    font-size: 14px;
+}
+.mainSelect .css-1okebmr-indicatorSeparator {
+    width: 0 !important;
+}
+
+.mainSelect .css-1uccc91-singleValue {
+    color: silver;
+}
+
+.mainSelect .css-1gtu0rj-indicatorContainer,
+.mainSelect .css-tlfecz-indicatorContainer {
+    padding: 0 5px !important;
+}
+
+.mainSelect .css-yk16xz-control {
+    background-color: #fff;
+}
+
+.mainSelect .css-1pahdxg-control {
+    box-shadow: none !important;
+    border-color: hsl(0, 0%, 80%) !important;
+    background-color: #fff;
+}
+
+.select_label {
+    margin-bottom: 10px;
+    /* margin-left: 10px; */
+}
+
+.select_label span {
+    color: silver;
+    letter-spacing: 1px;
+}
+.css-14jk2my-container,
+.css-1fhf3k1-control {
+    cursor: no-drop !important;
+    pointer-events: initial;
+    border-color: #cccccc !important;
+}
+.css-1fhf3k1-control:hover {
+    border-color: #cccccc !important;
+}
+@include respond(small-laptop) {
+    .select_label span {
+        font-size: 15px;
+    }
+}
+
+@include respond(phone) {
+    .dateBlock,
+    .textWithLabel,
+    .text-input-block,
+    .selectBlock {
+        // margin-bottom: 15px;
+    }
+    .select_label span {
+        font-size: 14px;
+    }
+    .select_label img {
+        width: 15px;
+        height: 15px;
+        margin-left: 10px;
+    }
+    .mainSelect .css-1uccc91-singleValue {
+        font-size: 14px;
+    }
+}

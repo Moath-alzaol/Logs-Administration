@@ -1,0 +1,115 @@
+.loggerSearch {
+    .loggerSearch__breadcrumb {
+        column-gap: 10px;
+        padding: 20px 0;
+        border-bottom: 1px solid silver;
+        align-items: center;
+        a {
+            color: blue;
+            transition: ease-in-out 0.2s;
+            &:hover {
+                color: silver;
+                transition: ease-in-out 0.2s;
+            }
+            &.activeLink {
+                color: silver;
+            }
+        }
+        i {
+            font-size: 8px;
+        }
+    }
+
+    .filters {
+        padding-left: 0;
+        margin: 0;
+        padding-top: 5px;
+        justify-content: space-between;
+        align-items: flex-end;
+        column-gap: 15px;
+        li {
+            width: 100%;
+        }
+    }
+    table {
+        width: 100%;
+        margin-top: 30px;
+        box-shadow: 0 0 2px 0px silver;
+        border-collapse: collapse;
+        height: 591px;
+        tr {
+            border-bottom: 1px solid silver;
+        }
+        th,
+        td {
+            padding: 15px;
+            text-align: start;
+        }
+        .table-header {
+            th {
+                .sort-icon {
+                    cursor: pointer;
+                    background-color: #46aafb42;
+                    border-radius: 50%;
+                    width: 17px;
+                    height: 17px;
+                    margin-left: 3px;
+                    display: inline-flex;
+                    justify-content: center;
+                    align-items: center;
+                    svg {
+                        width: 11px;
+                        height: 11px;
+                        fill: #2380ff;
+                    }
+                }
+            }
+        }
+    }
+    .table-empty {
+        margin-top: 30px;
+        box-shadow: 0 0 2px 0px silver;
+        height: 591px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        p {
+            font-size: 25px;
+            font-weight: bold;
+        }
+    }
+    .pagenation {
+        align-items: baseline;
+        justify-content: center;
+        column-gap: 5px;
+        padding: 15px;
+        box-shadow: 0px 1px 6px 0px #c0c0c08c;
+        li {
+            a {
+                display: block;
+                width: 25px;
+                height: 25px;
+                text-align: center;
+                border-radius: 3px;
+                color: gray;
+            }
+            .currentPage {
+                background-color: #46aafb42;
+                color: $primary-color;
+            }
+        }
+    }
+
+    @include respond(smallDesktop) {
+        .submit-button,
+        .reusable-label span {
+            font-size: 14px;
+        }
+        .text-input-block input {
+            font-size: 13px;
+            &::placeholder {
+                font-size: 12px;
+            }
+        }
+    }
+}

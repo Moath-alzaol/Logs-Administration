@@ -1,0 +1,49 @@
+@import "../../abstract/mixins";
+
+.text-input-block {
+    input {
+        // background-color: #ccd3cc !important;
+        border: 1px solid silver;
+        border-radius: 5px;
+        padding: 5px 10px;
+        color: $primary-color !important;
+        font-weight: bold;
+        font-size: 15px;
+        height: 38px;
+        &::placeholder {
+            font-size: 15px;
+            color: silver;
+        }
+    }
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+textarea:-webkit-autofill:active {
+    background-color: transparent !important;
+    box-shadow: 0 0 0 5rem #f9f9f9 inset !important;
+    -webkit-text-fill-color: $primary-color !important;
+}
+
+@include respond(laptop) {
+    .text-input-block {
+        .input-group {
+            padding: 8px 15px;
+            .form-control,
+            textarea {
+                font-size: 16px;
+                &::placeholder {
+                    font-size: 16px;
+                }
+            }
+            textarea {
+                min-height: 100px;
+            }
+        }
+    }
+}
