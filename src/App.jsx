@@ -9,7 +9,10 @@ function App() {
         <div className="App">
             <BrowserRouter basename="/">
                 <Switch>
-                    <Route component={LoggerSearch} path="/LoggerSearch/:page?/:fromDate?/:toDate?/:name?/:action?/:applicationType?/:appId?" />
+                    <Route
+                        component={LoggerSearch}
+                        path="/LoggerSearch/:page?/:fromDate?/:toDate?/:userAgent?/:actionType?/:applicationType?/:applicationId?"
+                    />
                     <Route component={Administration} path="/Administration" />
                     <Route component={Home} path="/home" />
                     <Redirect to="/LoggerSearch/1" />

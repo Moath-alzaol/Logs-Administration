@@ -1,6 +1,7 @@
 .selectBlock {
     // margin-bottom: 30px;
     // font-family: $helvetica-neue-font;
+    min-width: 200px;
 }
 .mainSelect .select__indicator .css-tj5bde-Svg {
     fill: silver !important;
@@ -56,6 +57,12 @@
 }
 .css-1fhf3k1-control:hover {
     border-color: #cccccc !important;
+}
+.select__clear-indicator {
+    .css-tj5bde-Svg {
+        width: 20px !important;
+        height: 20px !important;
+    }
 }
 @include respond(small-laptop) {
     .select_label span {

@@ -18,6 +18,7 @@ class SelectInput extends Component {
                     onChange={this.handleChange}
                     isMulti={isMulti}
                     placeholder={"select..."}
+                    isClearable
                 />
             </div>
         );

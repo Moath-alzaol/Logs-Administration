@@ -1,55 +1,35 @@
-import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import SelectInput from "../blocks/SelectInput";
-import TextInput from "../blocks/TextInput";
-import { FaArrowUp } from "react-icons/fa";
+import React, { useEffect, useRef, useState } from "react";
+
 import { logsService } from "../../services/logsService";
-import { fakeData } from "../../utils/misc";
-import { useHistory } from "react-router-dom";
+import { mapSelectData } from "../../utils/misc";
 import { useParams } from "react-router-dom";
 import moment from "moment";
 import Breadcrumb from "../blocks/Breadcrumb";
+import MainLoader from "../blocks/MainLoader";
+import TableFilter from "../blocks/TableFilter";
+import Pagenation from "../blocks/Pagenation";
+import Table from "../blocks/Table";
 
 function LoggerSearch() {
-    const [fields, setFields] = useState({
-        name: "",
-        fromDate: "",
-        toDate: "",
-        action: {},
-        applicationType: {},
-        appId: "",
-    });
-
-    const [actionTypes] = useState([
-        { label: "None", value: 0 },
-        { label: "Admin", value: "Admin" },
-        { label: "Submit application", value: "Submit application" },
-        { label: "initate application", value: "initate application" },
-    ]);
-
-    const [applicationsTypes] = useState([
-        { label: "None", value: 0 },
-        { label: "Lease renewal", value: "Lease renewal" },
-        { label: "Tenancy contract", value: "Tenancy contract" },
-        { label: "Add POA", value: "Add POA" },
-    ]);
-
+    let notFirst = useRef(false);
+    let isSearch = useRef(false);
     const params = useParams();
-    const history = useHistory();
     const [logs, setLogs] = useState({});
     const [pageCount, setPageCount] = useState();
     const [noResult, setNoResult] = useState(false);
+    const [isLoader, setIsLoader] = useState(true);
     const [searchResult, setSearchData] = useState({});
-
     const [currentPage, setCurrentPage] = useState(params.page ?? 1);
-
-    const onFieldChange = (name, value) => setFields({ ...fields, [name]: value });
+    const [actionTypes, setActionTypes] = useState([]);
+    const [applicationsTypes, setApplicationTypes] = useState([]);
 
     useEffect(() => {
-        if (Object.keys(logs).length < 1) {
+        if (!notFirst.current) {
             getLogs();
-        } else {
-            if (history.location.pathname.length > 15) {
+        }
+
+        if (notFirst.current) {
+            if (isSearch.current) {
                 getSearchResult();
             }
         }
@@ -58,23 +38,24 @@ function LoggerSearch() {
     const getSearchResult = () => {
         setNoResult(false);
         setSearchData({});
-
+        isSearch.current = false;
         const newData = Object.values(logs).flat();
 
         let newFilter = newData;
 
-        if (+params.name !== -1) newFilter = newFilter.filter((item) => item.name.toLowerCase().includes(params.name.toLowerCase()));
+        if (+params.userAgent !== -1)
+            newFilter = newFilter.filter((item) => item.userAgent?.toLowerCase()?.includes(params.userAgent?.replace("$", "/")?.toLowerCase()));
 
-        if (+params.appId !== -1) newFilter = newFilter.filter((item) => item.appId.toString().includes(params.appId));
+        if (+params.applicationId !== -1) newFilter = newFilter.filter((item) => item.applicationId?.toString()?.includes(params.applicationId));
 
-        if (+params.applicationType !== -1) newFilter = newFilter.filter((item) => item.applicationType.includes(params.applicationType));
+        if (+params.applicationType !== -1) newFilter = newFilter.filter((item) => item.applicationType?.includes(params.applicationType));
 
-        if (+params.action !== -1) newFilter = newFilter.filter((item) => item.action.includes(params.action));
+        if (+params.actionType !== -1) newFilter = newFilter.filter((item) => item.actionType?.includes(params.actionType));
 
         if (+params.fromDate !== -1) {
             newFilter = newFilter.filter((item) => {
                 let a = moment(params.fromDate);
-                let b = moment(item.available_on);
+                let b = moment(item.creationTimestamp);
                 return b.diff(a, "days") >= 0;
             });
         }
@@ -82,7 +63,7 @@ function LoggerSearch() {
         if (+params.toDate !== -1) {
             newFilter = newFilter.filter((item) => {
                 let a = moment(params.toDate);
-                let b = moment(item.available_on);
+                let b = moment(item.creationTimestamp);
                 return b.diff(a, "days") <= 0;
             });
         }
@@ -105,99 +86,110 @@ function LoggerSearch() {
     };
 
     const getLogs = async () => {
-        const { data, success } = await logsService.getLogs();
+        const {
+            data: { auditLog },
+            success,
+        } = await logsService.getLogs();
+
         if (!success) return;
 
-        let dataAfterFixedProblem = JSON.parse([...data].filter((_, index) => index !== 1509).join(""));
+        //>: get action types
+        let actionTypes = [];
+        let uniqueObject = {};
 
-        let actionValues = ["Admin", "Submit application", "initate application"];
-        let applicationTypes = ["Add POA", "Tenancy contract", "Lease renewal"];
+        for (let i in auditLog) {
+            let objTitle = auditLog[i]["actionType"];
+            uniqueObject[objTitle] = auditLog[i]["actionType"];
+        }
 
-        //! Add missing data to data come from Api start
-        const DataAfterAddedFakeData = dataAfterFixedProblem.map((item, index) => ({
-            ...item,
-            id: index + 1,
-            appId: 959 + index,
-            action: actionValues[Math.floor(Math.random() * actionValues.length)],
-            applicationType: applicationTypes[Math.floor(Math.random() * applicationTypes.length)],
-            available_on: moment(item.available_on).format("MM/DD/yy"),
-        }));
-        //! Add missing data to data come from Api end
+        // Loop to push unique action Type into array
+        for (let i in uniqueObject) {
+            actionTypes.push(uniqueObject[i]);
+        }
+        //>: get action types end
 
-        //! Add missing data to fake data start
-        const DataAfterAddedFakeData1 = fakeData.map((item, index) => ({
-            ...item,
-            id: index + 1,
-            appId: 959 + index,
-            action: actionValues[Math.floor(Math.random() * actionValues.length)],
-            applicationType: applicationTypes[Math.floor(Math.random() * applicationTypes.length)],
-            available_on: moment(item.available_on).format("MM/DD/yy"),
-        }));
-        //! Add missing data to fake data end
+        //>: get application types
+        let applicationType = [];
+        let uniqueObject2 = {};
 
-        let pageCount = Math.ceil(DataAfterAddedFakeData1.length / 10);
+        for (let i in auditLog) {
+            let objTitle = auditLog[i]["applicationType"];
+            uniqueObject2[objTitle] = auditLog[i]["applicationType"];
+        }
+
+        // Loop to push unique application Type into array
+        for (let i in uniqueObject2) {
+            applicationType.push(uniqueObject2[i]);
+        }
+        //>: get application types end
+
+        //>: store action types and application types in state
+
+        setActionTypes(mapSelectData(actionTypes));
+        setApplicationTypes(mapSelectData(applicationType));
+
+        //>: store action types and application types in state end
+
+        let pageCount = Math.ceil(auditLog.length / 10);
 
         let dataWithPages = {};
 
+        //>: convert data to objects with page number
         for (let i = 0; i < pageCount; i++) {
             let itemsPageCount = 10 * (i + 1);
             let lastItemsCount = 10 * i;
             dataWithPages[i + 1] = [];
-            for (let y = 0; y < DataAfterAddedFakeData1.length; y++) {
-                dataWithPages[i + 1] = DataAfterAddedFakeData1.filter((_, index) => lastItemsCount <= index && index < itemsPageCount);
+            for (let y = 0; y < auditLog.length; y++) {
+                dataWithPages[i + 1] = auditLog.filter((_, index) => lastItemsCount <= index && index < itemsPageCount);
             }
         }
+        //>: convert data to objects with page number end
 
         setLogs(dataWithPages);
         setPageCount(pageCount);
-    };
-
-    const searchSubmit = async () => {
-        setCurrentPage(1);
-        await history.push(
-            `/LoggerSearch/1/${fields.fromDate || "-1"}/${fields.toDate || "-1"}/${fields.name || "-1"}/${fields.action.value || "-1"}/${
-                fields.applicationType.value || "-1"
-            }/${fields.appId || "-1"}`
-        );
+        setIsLoader(false);
     };
 
     const handleSort = (key) => {
         let dataSorted;
-        if (key === "available_on") {
-            dataSorted = logs[currentPage].sort((a, b) => {
-                if (a[key] > b[key]) {
+        let copyData = [...logs[currentPage]];
+
+        if (key === "creationTimestamp") {
+            dataSorted = copyData.sort((a, b) => {
+                let dateA = moment(a[key]).format("yy-MM-DD");
+                let dateB = moment(b[key]).format("yy-MM-DD");
+
+                if (dateB > dateA) {
                     return moment(a[key]) - moment(b[key]);
                 }
-                if (a[key] < b[key]) {
+                if (dateB < dateA) {
                     return moment(b[key]) - moment(a[key]);
                 }
+                return 0;
             });
         } else {
-            if (key === "name" || key === "applicationType" || key === "action") {
-                dataSorted = logs[currentPage].sort((a, b) => {
-                    if (a[key] > b[key]) {
-                        return 1;
-                    }
-                    if (a[key] < b[key]) {
-                        console.log("2");
-
-                        return -1;
-                    }
-                    return 0;
+            if (key === "userAgent" || key === "applicationType" || key === "actionType") {
+                dataSorted = copyData.sort(function (a, b) {
+                    let textA = a[key] ? a[key].toUpperCase() : "Z";
+                    let textB = b[key] ? b[key].toUpperCase() : "Z";
+                    return textA < textB ? -1 : textA > textB ? 1 : 0;
                 });
             } else {
-                dataSorted = logs[currentPage].sort((a, b) => {
+                dataSorted = copyData.sort((a, b) => {
                     if (a[key] > b[key]) {
                         return b[key] - a[key];
                     }
                     if (a[key] < b[key]) {
                         return a[key] - b[key];
                     }
+                    return 0;
                 });
             }
         }
+
         setLogs({ ...logs, [currentPage]: dataSorted });
     };
+
     return (
         <div className="loggerSearch">
             <div className="container">
@@ -205,184 +197,32 @@ function LoggerSearch() {
                 <Breadcrumb />
                 {/* breadcrumb end   */}
 
-                {/* filter section start  */}
+                {/* Table Filter start  */}
+                <TableFilter
+                    actionTypes={actionTypes}
+                    applicationsTypes={applicationsTypes}
+                    setCurrentPage={(page) => setCurrentPage(page)}
+                    changeRef={() => {
+                        isSearch.current = true;
+                        notFirst.current = true;
+                    }}
+                />
+                {/* Table Filter end  */}
 
-                <ul className="filters flex">
-                    <li>
-                        <TextInput
-                            placeholder="eg. Admin.User"
-                            name="name"
-                            value={fields.name}
-                            label={"Employee Name"}
-                            onFieldChange={onFieldChange}
-                        />
-                    </li>
-                    <li>
-                        <SelectInput
-                            name="action"
-                            label={"Action Type"}
-                            value={fields.action}
-                            onFieldChange={(name, option) => onFieldChange(name, option)}
-                            data={actionTypes}
-                        />
-                    </li>
-                    <li>
-                        <SelectInput
-                            name="applicationType"
-                            label={"Applications Type"}
-                            value={fields.applicationType}
-                            onFieldChange={(name, option) => onFieldChange(name, option)}
-                            data={applicationsTypes}
-                        />
-                    </li>
-                    <li>
-                        <TextInput
-                            placeholder="Select Date"
-                            name="fromDate"
-                            value={fields.fromDate}
-                            label={"From Date"}
-                            onFieldChange={onFieldChange}
-                            type="date"
-                        />
-                    </li>
-                    <li>
-                        <TextInput
-                            placeholder="Select Date"
-                            name="toDate"
-                            value={fields.toDate}
-                            label={"To Date"}
-                            onFieldChange={onFieldChange}
-                            type="date"
-                        />
-                    </li>
-                    <li>
-                        <TextInput
-                            placeholder="eg. 219841/2021"
-                            name="appId"
-                            value={fields.appId}
-                            label={"Application ID"}
-                            onFieldChange={onFieldChange}
-                        />
-                    </li>
-                    <li>
-                        <button className="submit-button" onClick={searchSubmit}>
-                            Search Logger
-                        </button>
-                    </li>
-                </ul>
-                {/* filter section end  */}
-
-                {/* table start  */}
+                {/* Table start  */}
                 {noResult ? (
                     <div className="table-empty">
                         <p>No Result To Show</p>
                     </div>
+                ) : isLoader ? (
+                    <MainLoader />
                 ) : (
-                    <table>
-                        {/* tabel Header start  */}
-                        <thead>
-                            <tr className="table-header">
-                                <th>
-                                    Log ID
-                                    <span className="sort-icon" onClick={() => handleSort("id")}>
-                                        <FaArrowUp />
-                                    </span>
-                                </th>
-                                <th>
-                                    Employee Name
-                                    <span className="sort-icon" onClick={() => handleSort("name")}>
-                                        <FaArrowUp />
-                                    </span>
-                                </th>
-                                <th>
-                                    Application type
-                                    <span className="sort-icon" onClick={() => handleSort("applicationType")}>
-                                        <FaArrowUp />
-                                    </span>
-                                </th>
-                                <th>
-                                    Application ID
-                                    <span className="sort-icon" onClick={() => handleSort("appId")}>
-                                        <FaArrowUp />
-                                    </span>
-                                </th>
-                                <th>
-                                    Action
-                                    <span className="sort-icon" onClick={() => handleSort("action")}>
-                                        <FaArrowUp />
-                                    </span>
-                                </th>
-                                <th>
-                                    Action Details
-                                    <span className="sort-icon">
-                                        <FaArrowUp />
-                                    </span>
-                                </th>
-                                <th>
-                                    Date: Time
-                                    <span className="sort-icon" onClick={() => handleSort("available_on")}>
-                                        <FaArrowUp />
-                                    </span>
-                                </th>
-                            </tr>
-                        </thead>
-
-                        {/* tabel Header end  */}
-
-                        {/* tabel Body end  */}
-                        <tbody>
-                            {Object.keys(searchResult).length > 0 ? (
-                                <>
-                                    {searchResult[currentPage]?.map(({ name, id, price, city, available_on, appId, applicationType, action }) => {
-                                        return (
-                                            <tr key={id}>
-                                                <td>{id}</td>
-                                                <td>{name}</td>
-                                                <td>{applicationType}</td>
-                                                <td>{appId}</td>
-                                                <td>{action}</td>
-                                                <td>-/-</td>
-                                                <td>{available_on}</td>
-                                            </tr>
-                                        );
-                                    })}
-                                </>
-                            ) : (
-                                <>
-                                    {logs[currentPage]?.map(({ name, id, price, city, available_on, appId, applicationType, action }) => {
-                                        return (
-                                            <tr key={id}>
-                                                <td>{id}</td>
-                                                <td>{name}</td>
-                                                <td>{applicationType}</td>
-                                                <td>{appId}</td>
-                                                <td>{action}</td>
-                                                <td>-/-</td>
-                                                <td>{available_on}</td>
-                                            </tr>
-                                        );
-                                    })}
-                                </>
-                            )}
-                        </tbody>
-                        {/* tabel Body end  */}
-                    </table>
+                    <Table logs={logs} currentPage={currentPage} searchResult={searchResult} handleSort={(key) => handleSort(key)} />
                 )}
-                {/* table end  */}
+                {/* Table end  */}
 
                 {/* pagenation end  */}
-                <ul className="pagenation flex">
-                    {[...Array(pageCount).keys()].map((_, index) => {
-                        return (
-                            <li onClick={() => setCurrentPage(index + 1)} key={index}>
-                                <Link to={`/LoggerSearch/${index + 1}`} className={`${+params.page === index + 1 && "currentPage"}`}>
-                                    {index + 1}
-                                </Link>
-                            </li>
-                        );
-                    })}
-                </ul>
-
+                <Pagenation pageCount={pageCount} setCurrentPage={(page) => setCurrentPage(page)} />
                 {/* pagenation end  */}
             </div>
         </div>

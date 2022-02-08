@@ -10,7 +10,7 @@ class LogsService {
                 .get(apiEndPoints.logs.getLogs)
                 .then(({ data }) => data);
 
-            return handleResponse({ success: true, data });
+            return handleResponse({ success: true, data: data.result });
         } catch ({ response }) {
             return handleResponse({ success: false, ...response?.data });
         }

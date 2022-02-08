@@ -52,6 +52,17 @@ a {
 .container {
     max-width: 90%;
     margin: auto;
+    overflow-x: scroll;
+    padding: 5px;
+
+    &::-webkit-scrollbar {
+        width: 0.4rem;
+        height: 4px;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: darken($primary-color, 10%);
+        border-radius: 20px;
+    }
 }
 
 button,
